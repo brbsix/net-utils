@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+# Lookup public IP and/or hostname
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+hostlookup(){
+    if hash getent 2>/dev/null; then
+        hostname=$(getent hosts "$ip" | awk '{print $NF}')
+    fi
+
+    if [[ -z $hostname ]] && hash dig 2>/dev/null; then
+        hostname=$(dig +short -x "$ip" 2>/dev/null | sed 's/\.$//')
+    fi
+
+    if [[ -z $hostname ]] && hash host 2>/dev/null; then
+        # hostname=$(host "$ip" | awk '/ domain name pointer / { print $NF }' | sed 's/\.$//')
+        hostname=$(host "$ip" | sed 's/.* //;s/\.$//')
+    fi
+
+    if [[ -z $hostname ]] && hash nslookup 2>/dev/null; then
+        local output=$(nslookup "$ip")
+        if [[ $(readlink "$(which nslookup)") != busybox ]]; then
+            hostname=$(awk '/name = / { print $NF; exit }' <<<"$output" | sed 's/\.$//')
+        else
+            hostname=$(awk 'END{ print $NF }' <<<"$output")
+        fi
+    fi
+
+    if [[ -z $hostname ]]; then
+        hostname=$(request "http://ifconfig.me/host")
+    fi
+
+    if [[ -z $hostname && $OPTION_HOSTNAME = true ]]; then
+        error "Unable to obtain public hostname"
+        exit 1
+    fi
+}
+
+iplookup(){
+    ip=$(request "http://v4.ident.me")
+    [[ -z $ip ]] && ip=$(request "http://ipecho.net/plain")
+
+    if [[ -z $ip ]]; then
+        error "Unable to obtain public IP address"
+        exit 1
+    fi
+}
+
+query(){
+    if ! netcheck -i; then
+        error "No Internet access"
+        exit 1
+    fi
+
+    iplookup
+
+    if [[ ! ($OPTION_IP = true && -z $OPTION_HOSTNAME) ]]; then
+        hostlookup
+    fi
+}
+
+request(){
+    if hash wget 2>/dev/null; then
+        wget -qO- "$1"
+    elif hash curl 2>/dev/null; then
+        curl -s "$1"
+    else
+        error "Unable to continue without 'curl' or 'wget'"
+        exit 1
+    fi
+}
+
+
+if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+    echo "Usage: ${0##*/} [-i IP address] [-n hostname] [-l append timestamp]" >&2
+    echo "Lookup public IP address and/or hostname."
+    exit 1
+elif [[ -n "$@" ]]; then
+    while getopts ":iln" opt; do
+        case $opt in
+            i)
+                OPTION_IP=true
+                ;;
+            l)
+                OPTION_TIMESTAMP=true
+                ;;
+            n)
+                OPTION_HOSTNAME=true
+                ;;
+            \?)
+                error "Invalid option"
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+query
+
+if [[ ( $OPTION_HOSTNAME = true && $OPTION_IP = true ) \
+|| ( -z $OPTION_HOSTNAME && -z $OPTION_IP ) ]]; then
+    if [[ -n $hostname ]]; then 
+        output="$ip ($hostname)"
+    else
+        output="$ip"
+    fi
+elif [[ $OPTION_HOSTNAME = true ]]; then
+    output="$hostname"
+elif [[ $OPTION_IP = true ]]; then
+    output="$ip"
+fi
+
+if [[ $OPTION_TIMESTAMP = true ]]; then
+    # printf '[%s] %s\n' "$(date '+%-m-%-d-%Y %R')" "$output"
+    printf '[%s] %s\n' "$(date '+%m-%d-%Y %R')" "$output"
+else
+    echo "$output"
+fi

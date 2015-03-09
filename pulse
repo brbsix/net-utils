@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# Check whether network targets are DEAD or ALIVE
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+
+if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+    echo "Usage: ${0##*/} [-q] <hostname|IP address>"
+    echo "Check whether network targets are DEAD or ALIVE."
+    exit 0
+fi
+
+for arg in "$@"; do
+    if [[ $arg =~ ^(-q|--quiet)$ ]]; then
+        quiet=true
+    elif [[ $arg = -* ]]; then
+        error "Invalid option '$arg'"
+        exit 1
+    else
+        targets+=(${arg//http:\/\//})
+    fi
+done
+
+if (( ${#targets[@]} == 0 )); then
+    error "No targets"
+    exit 1
+fi
+
+for target in "${targets[@]}"; do
+    ping -c1q "$target" >/dev/null 2>&1 || (( ++d ))
+done
+
+if (( d > 0 )); then
+    [[ -z $quiet ]] && echo DEAD
+    exit 1
+else
+    [[ -z $quiet ]] && echo ALIVE
+    exit 0
+fi
+

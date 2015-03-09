@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# Query geoiplookup for data on a target hostname or IP address
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+fatal(){
+    if ! netcheck -i; then
+        error "No Internet access"
+        exit 1
+    else
+        error "$@"
+        exit 1
+    fi
+}
+
+query_all(){
+    verify "$1"
+    local data=$(geoiplookup "$target")
+    if [[ -z $data ]]; then
+        fatal "Received no output from 'geoiplookup'"
+    else
+        if grep -q "IP Address not found" <<< "$data"; then
+            fatal "Unable to lookup IP address for '$target'"
+        elif grep -q "can't resolve hostname" <<< "$data"; then
+            fatal "Unable to resolve hostname for '$target'"
+        else
+            output=$(sed 's/GeoIP //;s/ Edition//;s/, Rev 1//' <<< "$data")
+        fi
+    fi
+}
+
+query_asn(){
+    query_all "$1"
+    results=$(sed -n 's/ASNum: //p' <<< "$output")
+}
+
+query_city(){
+    query_all "$1"
+    local city=$(awk -F', ' '/^City: / { if ($4 != "N/A") print $4 }' <<< "$output")
+    local state=$(awk -F', ' '/^City: / { if ($3 != "N/A") print $3 }' <<< "$output")
+    local zip=$(awk -F', ' '/^City: / { if ($5 != "N/A") print $5 }' <<< "$output")
+    read -rd '' results <<< "${city} ${state} ${zip}"  # Strip whitespace
+}
+
+query_country(){
+    query_all "$1"
+    results=$(sed -n 's/Country: //p' <<< "$output")
+}
+
+verify(){
+    target=${1#*//}
+    if [[ ! $target =~ ^[A-Za-z0-9] || ! $target =~ \. || $target =~ [\!~^*,?] ]]; then
+        error "'$1' appears to be an invalid target"
+        exit 1
+    fi
+}
+
+
+if (( $# == 0 )); then
+    error "Please indicate a target hostname or IP address"
+    exit 1
+elif [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+    echo "Usage: ${0##*/} [--asn|--city|--country] <hostname|IP address>"
+    echo "Query geoiplookup for data on a target hostname or IP address."
+    exit 0
+elif (( $# == 1 )); then
+    query_all "$1"
+    results="$output"
+elif (( $# == 2 )); then
+    if [[ $1 = --asn ]]; then
+        query_asn "$2"
+    elif [[ $1 = --city ]]; then
+        query_city "$2"
+    elif [[ $1 = --country ]]; then
+        query_country "$2"
+    else
+        error "Invalid option"
+        exit 1
+    fi
+elif (( $# >= 3 )); then
+    error "Too many arguments"
+    exit 1
+fi
+
+if [[ -n $results ]]; then
+    echo "$results"
+else
+    if [[ $1 = --* ]]; then
+        error "No ${1#--} data for '$target'"
+    else
+        error "No results for '$target'"
+    fi
+fi

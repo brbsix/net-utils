@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# Log public IP address and hostname (if available)
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+
+logfile="$USER/Documents/public-ip.log"
+
+data=$(whatismyip)
+if [[ -n $data ]]; then
+    publicip=$(cut -d' ' -f1 <<< "$data")
+    publichost=$(awk -F '[()]' '{print $2}' <<< "$data")
+    timestamp=$(date '+%-m-%-d-%Y %R')
+fi
+
+if [[ -n $publicip && -n $publichost ]]; then
+    echo "[$timestamp] $publicip ($publichost)" >> "$logfile"
+    echo "Logged public ip and hostname to '$logfile':
+$publicip ($publichost)"
+    exit 0
+elif [[ -n $publicip ]]; then
+    echo "[$timestamp] $publicip" >> "$logfile"
+    echo "Logged public ip to '$logfile':
+$publicip"
+    exit 0
+else
+    error "Could not obtain public ip or hostname"
+    exit 1
+fi

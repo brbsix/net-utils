@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Check for INTERNET and/or LOCAL network access
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+internet_connectivity(){
+    [[ -n $(fping -ar1 4.2.2.2 8.8.8.8 8.8.4.4 2>/dev/null) ]]
+}
+
+
+local_connectivity(){
+    [[ -n $(fping -ar1 192.168.1.254 2>/dev/null) ]]
+}
+
+
+if (( $# == 0 )); then
+    connectivity=()
+    internet_connectivity && connectivity+=(INTERNET)
+    local_connectivity && connectivity+=(LOCAL)
+    echo "Connectivity: ${connectivity[@]-NONE}"
+elif [[ $# -eq 1 && $1 = -i ]]; then
+    internet_connectivity
+elif [[ $# -eq 1 && $1 = -l ]]; then
+    local_connectivity
+elif [[ $# -eq 1 && $1 =~ ^(-il|-li)$ ]]; then
+    internet_connectivity && local_connectivity
+elif [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+    echo "Usage: ${0##*/} [-i|-l]"
+    echo "Check for Internet or local network access."
+    exit 0
+elif (( $# == 1 )); then
+    error "Invalid argument"
+    exit 1
+else
+    error "Invalid number of arguments"
+    exit 1
+fi
