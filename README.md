@@ -18,12 +18,12 @@ Installation
 
 To install to your system bin folder:
 
-    sudo install -t scripts/* /usr/local/bin
+    sudo install -t /usr/local/bin scripts/*
 
 To install to your local bin folder:
 
     install -d $HOME/.local/bin
-    install -t scripts/* $HOME/.local/bin
+    install -t $HOME/.local/bin scripts/*
 
 *NOTE: Ensure that your local bin folder is on your PATH*
 
