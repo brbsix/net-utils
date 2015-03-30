@@ -31,7 +31,7 @@ if (( ${#targets[@]} == 0 )); then
 fi
 
 for target in "${targets[@]}"; do
-    ping -c1q "$target" >/dev/null 2>&1 || (( ++d ))
+    ping -c1q "$target" &>/dev/null || (( ++d ))
 done
 
 if (( d > 0 )); then
