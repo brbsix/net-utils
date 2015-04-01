@@ -34,7 +34,7 @@ hostlookup(){
         hostname=$(request "http://ifconfig.me/host")
     fi
 
-    if [[ -z $hostname && $OPTION_HOSTNAME = true ]]; then
+    if [[ -z $hostname && $option_hostname = true ]]; then
         error "Unable to obtain public hostname"
         exit 1
     fi
@@ -58,7 +58,7 @@ query(){
 
     iplookup
 
-    if [[ ! ($OPTION_IP = true && -z $OPTION_HOSTNAME) ]]; then
+    if [[ ! ($option_ip = true && -z $option_hostname) ]]; then
         hostlookup
     fi
 }
@@ -83,13 +83,13 @@ elif [[ -n "$@" ]]; then
     while getopts ":iln" opt; do
         case $opt in
             i)
-                OPTION_IP=true
+                option_ip=true
                 ;;
             l)
-                OPTION_TIMESTAMP=true
+                option_timestamp=true
                 ;;
             n)
-                OPTION_HOSTNAME=true
+                option_hostname=true
                 ;;
             \?)
                 error "Invalid option"
@@ -101,20 +101,20 @@ fi
 
 query
 
-if [[ ( $OPTION_HOSTNAME = true && $OPTION_IP = true ) \
-|| ( -z $OPTION_HOSTNAME && -z $OPTION_IP ) ]]; then
+if [[ ( $option_hostname = true && $option_ip = true ) \
+|| ( -z $option_hostname && -z $option_ip ) ]]; then
     if [[ -n $hostname ]]; then 
         output="$ip ($hostname)"
     else
         output="$ip"
     fi
-elif [[ $OPTION_HOSTNAME = true ]]; then
+elif [[ $option_hostname = true ]]; then
     output="$hostname"
-elif [[ $OPTION_IP = true ]]; then
+elif [[ $option_ip = true ]]; then
     output="$ip"
 fi
 
-if [[ $OPTION_TIMESTAMP = true ]]; then
+if [[ $option_timestamp = true ]]; then
     # printf '[%s] %s\n' "$(date '+%-m-%-d-%Y %R')" "$output"
     printf '[%s] %s\n' "$(date '+%m-%d-%Y %R')" "$output"
 else
