@@ -21,7 +21,7 @@ for arg in "$@"; do
         error "Invalid option '$arg'"
         exit 1
     else
-        targets+=(${arg//http:\/\//})
+        targets+=("${arg#*//}")
     fi
 done
 
