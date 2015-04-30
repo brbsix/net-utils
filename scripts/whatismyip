@@ -41,9 +41,9 @@ hostlookup(){
 
 iplookup(){
     ip=$(request "http://v4.ident.me")
-    [[ -z $ip ]] && ip=$(request "http://ipecho.net/plain")
+    [[ -z $ip || ! $ip =~ ^[0-9.]+$ ]] && ip=$(request "http://ipecho.net/plain")
 
-    if [[ -z $ip ]]; then
+    if [[ -z $ip || ! $ip =~ ^[0-9.]+$ ]]; then
         error "Unable to obtain public IP address"
         exit 1
     fi
