@@ -3,31 +3,50 @@
 # Check for INTERNET and/or LOCAL network access
 
 
+connectivity(){
+    if (( FPING == 1 )); then
+        [[ -n $(fping -ar1 "$@" 2>/dev/null) ]]
+    else
+        for address in "$@"; do
+            ping -c1 "$address" &>/dev/null && return 0
+        done
+        return 1
+    fi
+}
+
+
 error(){
-    echo "ERROR: $@" >&2
-}
-
-internet_connectivity(){
-    [[ -n $(fping -ar1 4.2.2.2 8.8.8.8 8.8.4.4 2>/dev/null) ]]
+    echo "ERROR: $*" >&2
 }
 
 
-local_connectivity(){
-    [[ -n $(fping -ar1 192.168.1.254 2>/dev/null) ]]
+info(){
+    echo "INFO: $*" >&2
 }
 
+
+INTERNET_ADDRESSES=(4.2.2.2 8.8.8.8 8.8.4.4)
+LOCAL_ADDRESSES=(192.168.1.254)
+
+if hash fping &>/dev/null; then
+    FPING=1
+else
+    info "Please install fping for best performance"
+    FPING=0
+fi
 
 if (( $# == 0 )); then
     connectivity=()
-    internet_connectivity && connectivity+=(INTERNET)
-    local_connectivity && connectivity+=(LOCAL)
-    echo "Connectivity: ${connectivity[@]-NONE}"
+    connectivity "${INTERNET_ADDRESSES[@]}" && connectivity+=(INTERNET)
+    connectivity "${LOCAL_ADDRESSES[@]}" && connectivity+=(LOCAL)
+    echo "Connectivity: ${connectivity[@]:-NONE}"
 elif [[ $# -eq 1 && $1 = -i ]]; then
-    internet_connectivity
+    connectivity "${INTERNET_ADDRESSES[@]}"
 elif [[ $# -eq 1 && $1 = -l ]]; then
-    local_connectivity
+    connectivity "${LOCAL_ADDRESSES[@]}"
 elif [[ $# -eq 1 && $1 =~ ^(-il|-li)$ ]]; then
-    internet_connectivity && local_connectivity
+    connectivity "${INTERNET_ADDRESSES[@]}" && \
+    connectivity "${LOCAL_ADDRESSES[@]}"
 elif [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
     echo "Usage: ${0##*/} [-i|-l]"
     echo "Check for Internet or local network access."
