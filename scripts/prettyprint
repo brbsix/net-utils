@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+
+"""Pretty print HTML from /dev/stdin"""
+
+
+import sys
+
+
+def prettify(html):
+    """Return prettified HTML."""
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html)
+    return soup.prettify()
+
+
+def highlight(html):
+    """Return syntax-highlighted HTML."""
+
+    import pygments
+    from pygments.lexers import HtmlLexer  # pylint: disable=E0611
+    from pygments.formatters import Terminal256Formatter  # pylint: disable=E0611
+
+    args = {'style':'native'}
+    lexer = HtmlLexer(**args)
+    formatter = Terminal256Formatter(**args)
+    return pygments.highlight(html, lexer, formatter)
+
+
+print(highlight(prettify(sys.stdin.read())))
