@@ -8,16 +8,16 @@ error(){
 }
 
 hostlookup(){
-    if hash getent 2>/dev/null; then
-        hostname=$(getent hosts "$ip" | awk '{ print $NF; exit }')
+    if hash getent &>/dev/null; then
+        HOSTNAME=$(getent hosts "$IP" 2>/dev/null | awk '{ print $NF; exit }')
     fi
 
-    if [[ -z $hostname ]] && hash dig 2>/dev/null; then
-        hostname=$(dig +short -x "$ip" 2>/dev/null | sed 's/\.$//')
+    if [[ -z $HOSTNAME ]] && hash dig &>/dev/null; then
+        HOSTNAME=$(dig +short -x "$IP" 2>/dev/null | sed 's/\.$//')
     fi
 
-    if [[ -z $hostname ]] && hash host 2>/dev/null; then
-        hostname=$(host "$ip" | awk '/ domain name pointer / { sub("\\.$", ""); print $NF; exit }')
+    if [[ -z $HOSTNAME ]] && hash host &>/dev/null; then
+        HOSTNAME=$(host "$IP" 2>/dev/null | awk '/ domain name pointer / { sub("\\.$", ""); print $NF; exit }')
     fi
 
     if [[ -z $hostname ]] && hash nslookup 2>/dev/null; then
