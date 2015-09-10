@@ -48,6 +48,9 @@ query(){
     if hash netcheck &>/dev/null && ! netcheck -i; then
         error "No Internet access"
         exit 1
+    elif ! hash wget &>/dev/null; then
+        error "Unable to continue without 'wget'"
+        exit 1
     fi
 
     iplookup
@@ -58,14 +61,7 @@ query(){
 }
 
 request(){
-    if hash wget 2>/dev/null; then
-        wget -qO- "$1"
-    elif hash curl 2>/dev/null; then
-        curl -s "$1"
-    else
-        error "Unable to continue without 'curl' or 'wget'"
-        exit 1
-    fi
+    wget -qO- "$1" 2>/dev/null
 }
 
 
