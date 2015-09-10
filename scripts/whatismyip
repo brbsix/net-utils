@@ -45,7 +45,7 @@ iplookup(){
 }
 
 query(){
-    if ! netcheck -i; then
+    if hash netcheck &>/dev/null && ! netcheck -i; then
         error "No Internet access"
         exit 1
     fi
