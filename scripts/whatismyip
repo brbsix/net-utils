@@ -20,13 +20,8 @@ hostlookup(){
         HOSTNAME=$(host "$IP" 2>/dev/null | awk '/ domain name pointer / { sub("\\.$", ""); print $NF; exit }')
     fi
 
-    if [[ -z $hostname ]] && hash nslookup 2>/dev/null; then
-        local output=$(nslookup "$ip")
-        if [[ $(readlink "$(which nslookup)") != busybox ]]; then
-            hostname=$(awk '/name = / { sub("\\.$", ""); print $NF; exit }' <<<"$output")
-        else
-            hostname=$(awk 'END{ print $NF }' <<<"$output")
-        fi
+    if [[ -z $HOSTNAME ]] && hash nslookup &>/dev/null; then
+        HOSTNAME=$(nslookup "$IP" 2>/dev/null | awk '/^Address 1: / { if ($3 != "0.0.0.0") { print $4; exit } }; /name =/ { sub("\\.$", "", $NF); print $NF; exit }')
     fi
 
     if [[ -z $hostname ]]; then
