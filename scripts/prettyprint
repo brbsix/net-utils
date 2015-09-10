@@ -26,5 +26,7 @@ def highlight(html):
     formatter = Terminal256Formatter(**args)
     return pygments.highlight(html, lexer, formatter)
 
-
-print(highlight(prettify(sys.stdin.read())))
+try:
+    print(highlight(prettify(sys.stdin.read())))
+except BrokenPipeError:
+    pass
