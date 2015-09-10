@@ -24,24 +24,29 @@ hostlookup(){
         HOSTNAME=$(nslookup "$IP" 2>/dev/null | awk '/^Address 1: / { if ($3 != "0.0.0.0") { print $4; exit } }; /name =/ { sub("\\.$", "", $NF); print $NF; exit }')
     fi
 
-    if [[ -z $hostname ]]; then
-        hostname=$(request "http://ifconfig.me/host")
+    if [[ -z $HOSTNAME ]]; then
+        HOSTNAME=$(request "http://ifconfig.me/host")
     fi
 
-    if [[ -z $hostname && $option_hostname = true ]]; then
+    if [[ -z $HOSTNAME && $option_hostname = true ]]; then
         error "Unable to obtain public hostname"
         exit 1
     fi
 }
 
 iplookup(){
-    ip=$(request "http://v4.ident.me")
-    [[ -z $ip || ! $ip =~ ^[0-9.]+$ ]] && ip=$(request "http://ipecho.net/plain")
+    local provider='' providers=()
 
-    if [[ -z $ip || ! $ip =~ ^[0-9.]+$ ]]; then
-        error "Unable to obtain public IP address"
-        exit 1
-    fi
+    providers=('http://v4.ident.me'
+               'http://ipecho.net/plain')
+
+    for provider in "${providers[@]}"; do
+        IP=$(request "$provider")
+        [[ -n $IP && $IP =~ ^[0-9.]+$ ]] && return 0
+    done
+
+    error "Unable to obtain public IP address"
+    exit 1
 }
 
 query(){
@@ -55,7 +60,7 @@ query(){
 
     iplookup
 
-    if [[ ! ($option_ip = true && -z $option_hostname) ]]; then
+    if ! (( OPTION_IP == 1 && OPTION_HOSTNAME != 1 )); then
         hostlookup
     fi
 }
@@ -65,46 +70,65 @@ request(){
 }
 
 
+PROGRAM=${0##*/}
+
 if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
-    echo "Usage: ${0##*/} [-i IP address] [-n hostname] [-l append timestamp]" >&2
-    echo "Lookup public IP address and/or hostname."
-    exit 1
-elif [[ -n "$@" ]]; then
-    while getopts ":iln" opt; do
-        case $opt in
-            i)
-                option_ip=true
-                ;;
-            l)
-                option_timestamp=true
-                ;;
-            n)
-                option_hostname=true
-                ;;
-            \?)
-                error "Invalid option"
-                exit 1
-                ;;
-        esac
-    done
+    cat <<-EOF
+	Usage: $PROGRAM [OPTIONS]
+	Lookup public IP address and/or hostname.
+
+	Options:
+	  -i                     public IP address
+	  -n                     public hostname
+
+	  -l                     append timestamp
+	EOF
+    exit 0
 fi
+
+params=$(getopt -o 'i,l,n' -n "$PROGRAM" -- "$@") || exit 1
+
+eval set -- "$params"
+
+HOSTNAME='' IP='' OPTION_HOSTNAME=0 OPTION_IP=0 OPTION_TIMESTAMP=0
+
+for arg in "$@"; do
+    case $arg in
+        -i)
+            OPTION_IP=1
+            ;;
+        -l)
+            OPTION_TIMESTAMP=1
+            ;;
+        -n)
+            OPTION_HOSTNAME=1
+            ;;
+        --)
+            :
+            ;;
+        *)
+            error "Additional arguments are not accepted"
+            exit 1
+            ;;
+    esac
+done
 
 query
 
-if [[ ( $option_hostname = true && $option_ip = true ) \
-|| ( -z $option_hostname && -z $option_ip ) ]]; then
-    if [[ -n $hostname ]]; then 
-        output="$ip ($hostname)"
+if (( OPTION_HOSTNAME == 1 && OPTION_IP == 1 )) || \
+   (( OPTION_HOSTNAME != 1 && OPTION_IP != 1 )); then
+    if [[ -n $HOSTNAME ]]; then
+        output="$IP ($HOSTNAME)"
     else
-        output="$ip"
+        output="$IP"
     fi
-elif [[ $option_hostname = true ]]; then
-    output="$hostname"
-elif [[ $option_ip = true ]]; then
-    output="$ip"
+elif (( OPTION_HOSTNAME == 1 )); then
+    output="$HOSTNAME"
+elif (( OPTION_IP == 1 )); then
+    output="$IP"
 fi
 
-if [[ $option_timestamp = true ]]; then
+if (( OPTION_TIMESTAMP == 1 )); then
     # printf '[%s] %s\n' "$(date '+%-m-%-d-%Y %R')" "$output"
     printf '[%s] %s\n' "$(date '+%m-%d-%Y %R')" "$output"
 else
