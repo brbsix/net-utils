@@ -1,17 +1,28 @@
 #!/usr/bin/python3
 
-"""Pretty print HTML from /dev/stdin"""
+"""
+
+Prettyprint syntax-highlighted HTML from /dev/stdin
+
+Compatible with Python 2/3
+
+Usage: command | prettyprint
+
+"""
 
 
-import sys
+def combo():
+    """Return syntax-highlighted prettified HTML."""
+    import signal
+    import sys
 
+    # ignore broken pipe error
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-def prettify(html):
-    """Return prettified HTML."""
+    content = highlight(prettify(sys.stdin.read()))
 
-    from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html)
-    return soup.prettify()
+    # encode to str if necessary (Python 2)
+    return content if isinstance(content, str) else content.encode('utf8')
 
 
 def highlight(html):
@@ -26,7 +37,13 @@ def highlight(html):
     formatter = Terminal256Formatter(**args)
     return pygments.highlight(html, lexer, formatter)
 
-try:
-    print(highlight(prettify(sys.stdin.read())))
-except BrokenPipeError:
-    pass
+
+def prettify(html):
+    """Return prettified HTML."""
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html)
+    return soup.prettify()
+
+
+print(combo())
