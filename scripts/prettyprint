@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# pylint: disable=no-name-in-module
 
 """
 
@@ -29,12 +30,13 @@ def highlight(html):
     """Return syntax-highlighted HTML."""
 
     import pygments
-    from pygments.lexers import HtmlLexer  # pylint: disable=E0611
-    from pygments.formatters import Terminal256Formatter  # pylint: disable=E0611
+    from pygments.lexers import HtmlLexer
+    from pygments.formatters import Terminal256Formatter
 
-    args = {'style':'native'}
+    args = {'style': 'native'}
     lexer = HtmlLexer(**args)
     formatter = Terminal256Formatter(**args)
+
     return pygments.highlight(html, lexer, formatter)
 
 
