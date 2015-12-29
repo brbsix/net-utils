@@ -1,43 +1,49 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+# pylint: disable=no-name-in-module
 
 """Lookup public IP"""
 
-
-# list of URLs to query for public IP
-URLS = ['http://v4.ident.me',
-        'http://ipecho.net/plain']
+from __future__ import print_function
 
 
-def multiquery(urls):
-    """Query multiple URLs for HTTP response and return first success."""
+def first(iterable):
+    """Return the first non-null item of an iterable."""
 
-    for url in urls:
-        try:
-            response = query(url)
-        except:
-            continue
-
-        if response:
-            return response
+    return next((i for i in iterable if i is not None), '')
 
 
 def query(url):
     """Query URL for HTTP response."""
-    import pycurl
-    from io import BytesIO
 
-    storage = BytesIO()
+    def _requests(url):
+        return requests.get(url).text
 
-    curl = pycurl.Curl()
-    curl.setopt(pycurl.URL, url)
-    curl.setopt(curl.WRITEFUNCTION, storage.write)
-    curl.perform()
-    curl.close()
+    def _urllib(url):
+        return urlopen(url).read().decode()
 
-    output = storage.getvalue().decode()
+    try:
+        # use requests if it is available
+        import requests
+        querytool = _requests
+    except ImportError:
+        # fallback to urllib
+        try:
+            from urllib.request import urlopen
+        # Python 2 compat
+        except ImportError:
+            from urllib import urlopen
+        querytool = _urllib
 
-    return output if output else None
+    try:
+        return querytool(url)
+    except:  # pylint: disable=bare-except
+        pass
 
 
-print(multiquery(URLS))
+# list of URLs to query for public IP
+URLS = ['junk',
+        'http://v4.ident.me',
+        'http://ipecho.net/plain']
+
+print(first((query(url) for url in URLS)))
