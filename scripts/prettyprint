@@ -9,6 +9,7 @@ Prettyprint syntax-highlighted HTML from /dev/stdin
 Compatible with Python 2/3
 
 Usage: command | prettyprint
+  or:  prettyprint < FILE
 
 """
 
