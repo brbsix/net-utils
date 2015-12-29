@@ -16,6 +16,7 @@ Usage: command | prettyprint
 
 def combo():
     """Return syntax-highlighted prettified HTML."""
+
     import signal
     import sys
 
@@ -46,8 +47,8 @@ def prettify(html):
     """Return prettified HTML."""
 
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html)
-    return soup.prettify()
+
+    return BeautifulSoup(html).prettify()
 
 
 print(combo())
