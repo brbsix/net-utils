@@ -22,8 +22,8 @@ To install to your system bin folder:
 
 To install to your local bin folder:
 
-    install -d $HOME/.local/bin
-    install -t $HOME/.local/bin scripts/*
+    install -d ~/.local/bin
+    install -t ~/.local/bin scripts/*
 
 *NOTE: Ensure that your local bin folder is on your PATH*
 
