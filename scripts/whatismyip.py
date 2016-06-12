@@ -6,26 +6,40 @@
 
 from __future__ import print_function
 
+import sys
+
 
 def first(iterable):
     """Return the first non-null item of an iterable."""
+    return next((i for i in iterable if i is not None), None)
 
-    return next((i for i in iterable if i is not None), '')
+
+def main():
+    """Start program."""
+    # list of URLs to query for public IP
+    urls = ['http://v4.ident.me', 'http://ipecho.net/plain']
+
+    ip_address = first((query(url) for url in urls))
+    if ip_address:
+        print(ip_address)
+    else:
+        sys.exit(1)
 
 
 def query(url):
     """Query URL for HTTP response."""
+    try:
+        return tool()(url)
+    except:  # pylint: disable=bare-except
+        pass
 
-    def _requests(url):
-        return requests.get(url).text
 
-    def _urllib(url):
-        return urlopen(url).read().decode()
-
+def tool():
+    """Return appropriate HTTP tool."""
     try:
         # use requests if it is available
         import requests
-        querytool = _requests
+        return lambda url: requests.get(url).text
     except ImportError:
         # fallback to urllib
         try:
@@ -33,15 +47,8 @@ def query(url):
         # Python 2 compat
         except ImportError:
             from urllib import urlopen
-        querytool = _urllib
-
-    try:
-        return querytool(url)
-    except:  # pylint: disable=bare-except
-        pass
+        return lambda url: urlopen(url).read().decode()
 
 
-# list of URLs to query for public IP
-URLS = ['http://v4.ident.me', 'http://ipecho.net/plain']
-
-print(first((query(url) for url in URLS)))
+if __name__ == '__main__':
+    main()
