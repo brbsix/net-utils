@@ -13,42 +13,45 @@ Usage: command | prettyprint
 
 """
 
+from __future__ import print_function
 
-def combo():
-    """Return syntax-highlighted prettified HTML."""
+import signal
+import sys
 
-    import signal
-    import sys
-
-    # ignore broken pipe error
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
-    content = highlight(prettify(sys.stdin.read()))
-
-    # encode to str if necessary (Python 2)
-    return content if isinstance(content, str) else content.encode('utf8')
+import bs4
+import pygments
+from pygments.formatters import Terminal256Formatter
+from pygments.lexers import HtmlLexer
 
 
 def highlight(html):
     """Return syntax-highlighted HTML."""
-
-    import pygments
-    from pygments.lexers import HtmlLexer
-    from pygments.formatters import Terminal256Formatter
-
     args = {'style': 'native'}
     lexer = HtmlLexer(**args)
     formatter = Terminal256Formatter(**args)
-
     return pygments.highlight(html, lexer, formatter)
+
+
+def main():
+    """Start program."""
+    # ignore broken pipe
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+    print(prettyprint(sys.stdin.read()))
 
 
 def prettify(html):
     """Return prettified HTML."""
-
-    from bs4 import BeautifulSoup
-
-    return BeautifulSoup(html).prettify()
+    return bs4.BeautifulSoup(html, 'html.parser').prettify()
 
 
-print(combo())
+def prettyprint(html):
+    """Return prettified syntax-highlighted HTML."""
+    data = highlight(prettify(html))
+
+    # encode to str if necessary (Python 2)
+    return data if isinstance(data, str) else data.encode('utf8')
+
+
+if __name__ == '__main__':
+    main()
