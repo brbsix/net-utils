@@ -42,8 +42,6 @@ def query(url):
 
 
 # list of URLs to query for public IP
-URLS = ['junk',
-        'http://v4.ident.me',
-        'http://ipecho.net/plain']
+URLS = ['http://v4.ident.me', 'http://ipecho.net/plain']
 
 print(first((query(url) for url in URLS)))
