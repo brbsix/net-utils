@@ -28,7 +28,7 @@ hostlookup(){
         HOSTNAME=$(request "http://ifconfig.me/host")
     fi
 
-    if [[ -z $HOSTNAME && $option_hostname = true ]]; then
+    if [[ -z $HOSTNAME && $OPTION_HOSTNAME -eq 1 ]]; then
         error "Unable to obtain public hostname"
         exit 1
     fi
