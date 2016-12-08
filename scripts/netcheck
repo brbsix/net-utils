@@ -39,7 +39,7 @@ if (( $# == 0 )); then
     connectivity=()
     connectivity "${INTERNET_ADDRESSES[@]}" && connectivity+=(INTERNET)
     connectivity "${LOCAL_ADDRESSES[@]}" && connectivity+=(LOCAL)
-    echo "Connectivity: ${connectivity[@]:-NONE}"
+    echo "Connectivity: ${connectivity[*]:-NONE}"
 elif [[ $# -eq 1 && $1 = -i ]]; then
     connectivity "${INTERNET_ADDRESSES[@]}"
 elif [[ $# -eq 1 && $1 = -l ]]; then
