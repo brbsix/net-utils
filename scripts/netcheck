@@ -26,7 +26,7 @@ info(){
 
 
 INTERNET_ADDRESSES=(4.2.2.2 8.8.8.8 8.8.4.4)
-LOCAL_ADDRESSES=(192.168.1.1 192.168.1.254)
+LOCAL_ADDRESSES=(10.0.0.1 172.16.0.1 192.168.1.1 192.168.1.254)
 
 if hash fping &>/dev/null; then
     FPING=1
