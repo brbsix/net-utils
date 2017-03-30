@@ -28,8 +28,10 @@ def main():
 
 def query(url):
     """Query URL for HTTP response."""
+    request = tool()
+
     try:
-        return tool()(url)
+        return request(url)
     except:  # pylint: disable=bare-except
         pass
 
