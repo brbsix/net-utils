@@ -25,11 +25,11 @@ hostlookup(){
     fi
 
     if [[ -z $HOSTNAME ]]; then
-        HOSTNAME=$(request "http://ifconfig.me/host")
+        HOSTNAME=$(request 'http://ifconfig.me/host')
     fi
 
     if [[ -z $HOSTNAME && $OPTION_HOSTNAME -eq 1 ]]; then
-        error "Unable to obtain public hostname"
+        error 'Unable to obtain public hostname'
         exit 1
     fi
 }
@@ -45,13 +45,13 @@ iplookup(){
         [[ -n $IP && $IP =~ ^[0-9.]+$ ]] && return 0
     done
 
-    error "Unable to obtain public IP address"
+    error 'Unable to obtain public IP address'
     exit 1
 }
 
 query(){
     if hash netcheck &>/dev/null && ! netcheck -i; then
-        error "No Internet access"
+        error 'No Internet access'
         exit 1
     elif ! hash wget &>/dev/null; then
         error "Unable to continue without 'wget'"
@@ -107,7 +107,7 @@ for arg in "$@"; do
             :
             ;;
         *)
-            error "Additional arguments are not accepted"
+            error 'Additional arguments are not accepted'
             exit 1
             ;;
     esac
