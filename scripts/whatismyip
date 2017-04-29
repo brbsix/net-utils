@@ -53,8 +53,8 @@ query(){
     if hash netcheck &>/dev/null && ! netcheck -i; then
         error 'No Internet access'
         exit 1
-    elif ! hash wget &>/dev/null; then
-        error "Unable to continue without 'wget'"
+    elif ! (hash curl &>/dev/null || hash wget &>/dev/null); then
+        error "Unable to continue without 'curl' or 'wget'"
         exit 1
     fi
 
@@ -66,7 +66,11 @@ query(){
 }
 
 request(){
-    wget --timeout=1 --tries=3 -qO- "$1" 2>/dev/null
+    if hash curl &>/dev/null; then
+        curl --max-time 3 -- "$1" 2>/dev/null
+    elif hash wget &>/dev/null; then
+        wget --timeout=1 --tries=3 -qO- -- "$1" 2>/dev/null
+    fi
 }
 
 
