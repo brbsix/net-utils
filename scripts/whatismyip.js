@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+
 /* jshint esversion: 6 */
 
 const http = require('http');
 
-function get (url, callback) {
+function get(url, callback) {
     return http.get(url, function (response) {
         // continuously update stream with data
         let body = '';
